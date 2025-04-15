@@ -20,8 +20,8 @@ public class HelloWorldController {
     @GetMapping("/hello")
     public String sendGreetings() {
         if ("1".equals("1")) {
-            return "Hello World!";
-        } else {return "Hello World!";}
+            return "Hello World!1";
+        } else {return "Hello World!2";}
         
         
     }
