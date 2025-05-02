@@ -4,7 +4,7 @@ pipeline {
     environment {
         SONARQUBE_ENV = 'sonarqube-devops'
         NEXUS_REPO_URL = 'http://artifactory:8081/repository/maven-releases/'
-        VERSION_FILE = 'version.txt'
+        VERSION_FILE = 'devops/version.txt'
     }
 
     stages {
