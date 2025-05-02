@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    environment {
+        SONARQUBE_ENV = 'sonarqube-devops'
+        NEXUS_REPO_URL = 'http://artifactory:8081/repository/maven-releases/'
+        VERSION_FILE = 'version.txt'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Set Version') {
+            steps {
+                script {
+                    def version = readFile("${VERSION_FILE}").trim()
+                    def (major, minor, patch) = version.tokenize('.').collect { it as int }
+
+                    if (env.BRANCH_NAME == 'develop') {
+                        patch += 1
+                        currentBuild.displayName = "${major}.${minor}.${patch}-SNAPSHOT"
+                        env.ARTIFACT_VERSION = "${major}.${minor}.${patch}-SNAPSHOT"
+                        writeFile file: VERSION_FILE, text: "${major}.${minor}.${patch}"
+                    } else if (env.BRANCH_NAME == 'master') {
+                        currentBuild.displayName = "${major}.${minor}.${patch}"
+                        env.ARTIFACT_VERSION = "${major}.${minor}.${patch}"
+                    }
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh './mvnw test'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv("${SONARQUBE_ENV}") {
+                    sh './mvnw sonar:sonar'
+                }
+            }
+        }
+
+        stage('Build JAR') {
+            steps {
+                sh "./mvnw clean package -Drevision=${env.ARTIFACT_VERSION}"
+            }
+        }
+
+        stage('Upload to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                    curl -u $NEXUS_USER:$NEXUS_PASS \
+                         --upload-file target/myapp-${env.ARTIFACT_VERSION}.jar \
+                         ${NEXUS_REPO_URL}myapp-${env.ARTIFACT_VERSION}.jar
+                    """
+                }
+            }
+        }
+
+        stage('Git Tag (if master)') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh """
+                git config user.name "Jenkins"
+                git config user.email "jenkins@ci"
+                git tag ${env.ARTIFACT_VERSION}
+                git push origin ${env.ARTIFACT_VERSION}
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            mail to: 'javier.piqueraslozano@scalian.com',
+                 subject: "✅ CI Success: ${env.BRANCH_NAME}",
+                 body: "Build and deploy succeeded with version: ${env.ARTIFACT_VERSION}"
+        }
+        failure {
+            mail to: 'javier.piqueraslozano@scalian.com',
+                 subject: "❌ CI Failed: ${env.BRANCH_NAME}",
+                 body: "The CI pipeline failed during ${env.STAGE_NAME}"
+        }
+    }
+}
+
