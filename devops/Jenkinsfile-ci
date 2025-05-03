@@ -9,6 +9,13 @@ pipeline {
 
     stages {
 
+
+        stage('Init') {
+            steps {
+              	sh 'docker ps'
+            }
+        }
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -35,6 +42,11 @@ pipeline {
         }
 
         stage('Test') {
+            agent {
+              	docker {
+                	image 'maven:3.8.6-openjdk-11-slim'
+                }
+            }
             steps {
                 sh 'mvn test'
             }
@@ -80,6 +92,16 @@ pipeline {
             }
         }
     }
+
+    post {
+        always  {
+          sh 'docker logout'
+      
+        }
+        success {
+          echo "SUCCESS"
+        }
+   }
 /*//es necesario configurar un servidor de smtp local, ¿buscar algún docker?
     post {
         success {
