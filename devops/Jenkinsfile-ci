@@ -36,21 +36,21 @@ pipeline {
 
         stage('Test') {
             steps {
-                sh './mvn test'
+                sh 'mvn test'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_ENV}") {
-                    sh './mvn sonar:sonar'
+                    sh 'mvn sonar:sonar'
                 }
             }
         }
 
         stage('Build JAR') {
             steps {
-                sh "./mvn clean package -Drevision=${env.ARTIFACT_VERSION}"
+                sh "mvn clean package -Drevision=${env.ARTIFACT_VERSION}"
             }
         }
 
