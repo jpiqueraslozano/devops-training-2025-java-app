@@ -43,8 +43,9 @@ pipeline {
 
         stage('Test') {
             agent {
-              	docker {
-                	image 'maven:3.8.6-openjdk-11-slim'
+                docker {
+                    image 'maven:3.8.6-openjdk-11-slim'
+                    args '--network devops_training_net'
                 }
             }
             steps {
@@ -52,10 +53,12 @@ pipeline {
             }
         }
 
+
         stage('SonarQube Analysis') {
             agent {
                 docker {
                     image 'maven:3.8.6-openjdk-11-slim'
+                    args '--network devops_training_net'
                 }
             }
             steps {
