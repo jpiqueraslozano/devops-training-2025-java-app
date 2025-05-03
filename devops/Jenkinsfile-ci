@@ -80,18 +80,19 @@ pipeline {
             }
         }
     }
-
+/*//es necesario configurar un servidor de smtp local, ¿buscar algún docker?
     post {
         success {
             mail to: 'javier.piqueraslozano@scalian.com',
-                 subject: "✅ CI Success: ${env.BRANCH_NAME}",
+                 subject: "CI Success: ${env.BRANCH_NAME}",
                  body: "Build and deploy succeeded with version: ${env.ARTIFACT_VERSION}"
         }
         failure {
             mail to: 'javier.piqueraslozano@scalian.com',
-                 subject: "❌ CI Failed: ${env.BRANCH_NAME}",
+                 subject: "CI Failed: ${env.BRANCH_NAME}",
                  body: "The CI pipeline failed during ${env.STAGE_NAME}"
         }
     }
+*/
 }
 
